@@ -1,12 +1,31 @@
-module Main exposing (Model, Msg(..), main, update, view)
+module Main exposing (Model, Msg(..), Todo, main, update, view)
 
 import Browser
-import Html exposing (Html, button, div, text)
+import Html exposing (Html, button, div, input, li, text, ul)
+import Html.Attributes exposing (type_)
 import Html.Events exposing (onClick)
 
 
 type alias Model =
-    ()
+    { todos : List Todo }
+
+
+type alias Todo =
+    { id : Int
+    , title : String
+    , completed : Bool
+    }
+
+
+init : Model
+init =
+    { todos =
+        [ { id = 1
+          , title = "Buy oranges"
+          , completed = False
+          }
+        ]
+    }
 
 
 
@@ -28,9 +47,20 @@ update msg model =
 -- VIEW
 
 
+todoView : Todo -> Html Msg
+todoView { title } =
+    li []
+        [ input [ type_ "checkbox" ] []
+        , text title
+        ]
+
+
 view : Model -> Html Msg
-view model =
-    div [] [ text "hello world" ]
+view { todos } =
+    div []
+        [ div [] [ text "Grocery list:" ]
+        , ul [] (List.map todoView todos)
+        ]
 
 
 
@@ -40,7 +70,7 @@ view model =
 main : Program () Model Msg
 main =
     Browser.sandbox
-        { init = ()
+        { init = init
         , update = update
         , view = view
         }
