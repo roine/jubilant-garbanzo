@@ -1,7 +1,7 @@
 module Main exposing (Model, Msg(..), Todo, main, update, view)
 
 import Browser
-import Html exposing (Html, button, div, input, li, span, text, ul)
+import Html exposing (Html, a, button, div, input, li, span, text, ul)
 import Html.Attributes exposing (checked, placeholder, style, type_, value)
 import Html.Events exposing (onCheck, onClick, onInput)
 
@@ -10,6 +10,7 @@ type alias Model =
     { todos : List Todo
     , transient : Transient
     , nextId : Int
+    , displaying : Displaying
     }
 
 
@@ -35,12 +36,19 @@ init =
         ]
     , transient = initialTransient
     , nextId = 2
+    , displaying = All
     }
 
 
 initialTransient : Transient
 initialTransient =
     { text = "" }
+
+
+type Displaying
+    = All
+    | Completed
+    | Incomplete
 
 
 
@@ -52,6 +60,7 @@ type Msg
     | CreateTodo
     | RemoveTodo Int
     | MarkComplete Int Bool
+    | ChangeFilter Displaying
 
 
 update : Msg -> Model -> Model
@@ -94,6 +103,9 @@ update msg model =
                         model.todos
             }
 
+        ChangeFilter displaying ->
+            { model | displaying = displaying }
+
 
 
 -- VIEW
@@ -116,7 +128,31 @@ todoView { id, completed, title } =
 
 
 view : Model -> Html Msg
-view { todos, transient } =
+view ({ todos, transient, displaying } as model) =
+    let
+        filteredTodos =
+            case displaying of
+                All ->
+                    todos
+
+                Completed ->
+                    List.filter (\todo -> todo.completed) todos
+
+                Incomplete ->
+                    List.filter (\todo -> not todo.completed) todos
+
+        filterView newFilter content =
+            let
+                activeStyle =
+                    if newFilter == model.displaying then
+                        [ style "font-weight" "bold" ]
+
+                    else
+                        []
+            in
+            a (List.append activeStyle [ onClick (ChangeFilter newFilter) ])
+                [ text content ]
+    in
     div []
         [ div []
             [ text "Add item"
@@ -124,7 +160,25 @@ view { todos, transient } =
             , button [ onClick CreateTodo ] [ text "Add" ]
             ]
         , div [] [ text "Grocery list:" ]
-        , ul [] (List.map todoView todos)
+        , ul []
+            (List.map todoView
+                (List.sortBy
+                    (\todo ->
+                        if todo.completed then
+                            1
+
+                        else
+                            0
+                    )
+                    filteredTodos
+                )
+            )
+        , div [] [ text "Displaying" ]
+        , ul []
+            [ li [] [ filterView All "All" ]
+            , li [] [ filterView Completed "Completed" ]
+            , li [] [ filterView Incomplete "Ongoing" ]
+            ]
         ]
 
 
