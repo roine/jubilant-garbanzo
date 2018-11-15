@@ -1,7 +1,7 @@
 module Main exposing (Model, Msg(..), Todo, main, update, view)
 
 import Browser
-import Html exposing (Html, button, div, input, li, text, ul)
+import Html exposing (Html, button, div, input, li, span, text, ul)
 import Html.Attributes exposing (placeholder, type_, value)
 import Html.Events exposing (onClick, onInput)
 
@@ -50,6 +50,7 @@ initialTransient =
 type Msg
     = UpdateText String
     | CreateTodo
+    | RemoveTodo Int
 
 
 update : Msg -> Model -> Model
@@ -73,6 +74,11 @@ update msg model =
                     , nextId = model.nextId + 1
                 }
 
+        RemoveTodo todoId ->
+            { model
+                | todos = List.filter (\todo -> todo.id /= todoId) model.todos
+            }
+
 
 
 -- VIEW
@@ -82,7 +88,8 @@ todoView : Todo -> Html Msg
 todoView { id, completed, title } =
     li []
         [ input [ type_ "checkbox" ] []
-        , text title
+        , span [] [ text title ]
+        , button [ onClick (RemoveTodo id) ] [ text "Remove" ]
         ]
 
 
